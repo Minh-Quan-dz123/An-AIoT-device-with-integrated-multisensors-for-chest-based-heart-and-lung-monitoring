@@ -1,18 +1,23 @@
+// 1. include các header để sử dụng hàm trong các header
 #include <Arduino.h>
 
-// put function declarations here:
-int myFunction(int, int);
 
-void setup() {
-  // put your setup code here, to run once:
-  int result = myFunction(2, 3);
+
+// II.setup ban đầu
+void setup() 
+{
+  Serial.begin(115200);
+
+  // 1. gọi hàm tạo và chạy Tasks() đọc và dữ liệu từ cảm biến AD8232
+  
+  // 2. gọi hàm tạo và chạy Tasks() đọc và dữ liệu từ cảm biến AD8232
+
+
 }
 
-void loop() {
-  // put your main code here, to run repeatedly:
+// dùng hệ điều hành freeRTOS nên ko cần loop nữa
+void loop() 
+{
+  
 }
 
-// put function definitions here:
-int myFunction(int x, int y) {
-  return x + y;
-}
