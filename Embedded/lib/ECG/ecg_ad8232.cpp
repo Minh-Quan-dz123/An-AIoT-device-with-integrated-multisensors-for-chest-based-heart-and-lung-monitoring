@@ -25,36 +25,33 @@ static ECGConfig ecg_config = {
 // Đây là hàm chính được hệ điều hành FreeRTOS quản lý
 void TaskECG(void *pvParameters) 
 {
-    // Khởi tạo ADC trước khi lặp
-    // ESP32 ADC được khởi tạo sẵn, không cần setup thêm
-    
+    // Lấy thời điểm hiện tại làm mốc thời gian gốc cho vòng lặp
     uint32_t previous_wake_time = xTaskGetTickCount();
     
     while (1) 
     {
-        // Đọc giá trị ADC từ chân ECG
+        // 1. Đọc giá trị ADC từ cảm biến AD8232
         int raw_ecg_value = readRawECGValue();
         
-        // Chuyển đổi ADC sang điện áp (mV)
+        // 2. Chuyển đổi giá trị số sang điện áp thực tế (mV)
         float ecg_voltage_mv = convertADCToVoltage(raw_ecg_value);
         
-        // Kiểm tra trạng thái lead-off (khi electrode mất contact)
+        // 3. Kiểm tra các điện cực có bị bong ra không (Lead-off detection)
         uint8_t lead_off = checkLeadOffStatus();
         
-        // Tạo struct dữ liệu ECG
+        // 4. Đóng gói dữ liệu vào struct kèm timestamp
         ECGData ecg_data = {
-            .timestamp_ms = xTaskGetTickCount() * portTICK_PERIOD_MS, // thời gian hiện tại (ms)
+            .timestamp_ms = xTaskGetTickCount() * portTICK_PERIOD_MS,
             .raw_adc_value = raw_ecg_value,
             .voltage_mv = ecg_voltage_mv,
             .lead_off_status = lead_off
         };
         
-        // In dữ liệu ra Serial Monitor (để debug)
+        // 5. Debug dữ liệu qua Serial (Plotter hoặc Monitor)
         printECGData(ecg_data);
         
-        // Sử dụng vTaskDelayUntil để đảm bảo tần số lấy mẫu ổn định
-        // Điều này tốt hơn vTaskDelay() vì nó không chứa độ trễ cộng dồn
-        vTaskDelayUntil(&previous_wake_time, ecg_config.sampling_period_ms / portTICK_PERIOD_MS);
+        // Duy trì tần số lấy mẫu ổn định tuyệt đối bằng cách bù trừ thời gian thực thi code
+        vTaskDelayUntil(&previous_wake_time, pdMS_TO_TICKS(ecg_config.sampling_period_ms));
     }
 }
 
