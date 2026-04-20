@@ -47,8 +47,8 @@ Hệ thống gồm 3 phần chính:
 | OUTPUT | GPIO34 (D34) |
 | GND    | GND |
 | 3.3V   | 3.3V |
-| LO+    | GPIO (tuỳ chọn) |
-| LO-    | GPIO (tuỳ chọn) |
+| LO+    | GPIO35 (D35) |
+| LO-    | GPIO36 (D36) |
 
 ---
 
