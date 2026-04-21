@@ -12,9 +12,9 @@
 
 // Biến toàn cục lưu cấu hình ECG
 static ECGConfig ecg_config = {
-    .adc_pin = ECG_PIN,
-    .sampling_period_ms = ECG_SAMPLING_PERIOD_MS,
     .buffer_size = 1000,
+    .sampling_period_ms = ECG_SAMPLING_PERIOD_MS,
+    .adc_pin = ECG_PIN,
     .lead_off_pin_pos = LEAD_OFF_PIN_DISABLED,
     .lead_off_pin_neg = LEAD_OFF_PIN_DISABLED
 };
@@ -31,7 +31,7 @@ void TaskECG(void *pvParameters)
     while (1) 
     {
         // 1. Đọc giá trị ADC từ cảm biến AD8232
-        int raw_ecg_value = readRawECGValue();
+        uint16_t raw_ecg_value = readRawECGValue();
         
         // 2. Chuyển đổi giá trị số sang điện áp thực tế (mV)
         float ecg_voltage_mv = convertADCToVoltage(raw_ecg_value);
@@ -42,8 +42,8 @@ void TaskECG(void *pvParameters)
         // 4. Đóng gói dữ liệu vào struct kèm timestamp
         ECGData ecg_data = {
             .timestamp_ms = xTaskGetTickCount() * portTICK_PERIOD_MS,
-            .raw_adc_value = raw_ecg_value,
             .voltage_mv = ecg_voltage_mv,
+            .raw_adc_value = raw_ecg_value,
             .lead_off_status = lead_off
         };
         
@@ -79,16 +79,16 @@ void setupECGConfiguration(const ECGConfig &config)
 }
 
 // 3.4. Hàm đọc giá trị ADC thô
-int readRawECGValue()
+uint16_t readRawECGValue()
 {
     // Đọc giá trị từ GPIO34 (chân ADC cho OUTPUT của AD8232)
     // analogRead() tự động chuyển đổi ADC và trả về giá trị 0-4095
-    int adc_value = analogRead(ecg_config.adc_pin);
+    uint16_t adc_value = analogRead(ecg_config.adc_pin);
     return adc_value;
 }
 
 // 3.5. Hàm chuyển đổi ADC sang điện áp (mV)
-float convertADCToVoltage(int adc_value)
+float convertADCToVoltage(uint16_t adc_value)
 {
     // Công thức: Voltage (mV) = (ADC_value / ADC_MAX) * REFERENCE_VOLTAGE
     float voltage_mv = ((float)adc_value / (float)ADC_MAX_VALUE) * REFERENCE_VOLTAGE;

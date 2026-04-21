@@ -17,7 +17,7 @@ void setup()
   Serial.println("Initializing ECG Task...");
 
   // Nếu dùng chân LO+/LO- của AD8232, cấu hình cả hai chân vào đây
-  ECGConfig ecg_config = { 34, 5, 1000, 35, 36 };
+  ECGConfig ecg_config = {1000, 34, 5, 35, 36};
   setupECGConfiguration(ecg_config);
 
   // 1. Gọi hàm tạo và chạy Task ECG để đọc dữ liệu từ cảm biến AD8232
