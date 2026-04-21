@@ -122,3 +122,24 @@ void loop()
 {
     // Không dùng loop vì FreeRTOS đã xử lý
 }
+
+
+//Hàm void vTaskDelayUntil(uint32_t *previous_wake_time, uint32_t period)
+// {
+//     uint32_t current_time = xTaskGetTickCount();
+
+//     uint32_t next_wake_time = *previous_wake_time + period;
+
+//     if (next_wake_time > current_time)
+//     {
+//         // ngủ đến thời điểm đó
+//         delay(next_wake_time - current_time);
+//     }
+//     else
+//     {
+//         // nếu đã trễ thì không delay nữa
+//     }
+
+//     // cập nhật lại mốc thời gian
+//     *previous_wake_time = next_wake_time;
+// }

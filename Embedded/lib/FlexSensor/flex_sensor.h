@@ -1,22 +1,59 @@
-#ifndef AD8232_TASKS_H
-#define AD8232_TASKS_H
+#ifndef FLEX_SENSOR_TASKS_H
+#define FLEX_SENSOR_TASKS_H
 
-//1. khai báo các thư viện cần để sử dụng
 #include <Arduino.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 
-//2. Khai báo các biến, struct của header này
-// ví dụ 1 struct đại diện cho cảm biến này
-// hoặc mảng lưu trữ tín hiệu, tùy thiết kế
+// 1 mẫu dữ liệu Flex
+struct FlexSample {
+    uint32_t timestamp_ms;   // thời gian lấy mẫu
+    int raw_adc_value;       // giá trị ADC thô
+    float filtered_value;    // giá trị sau EMA
+};
 
-//3. khai báo (nhớ là chỉ khai báo thôi) các hàm tự định nghĩa
-void TaskFlexSenSor(void *pvParameters); // hàm xử lý logic chính
-void initFlexTask(void *pvParameters); // hàm khởi tạo tasks
-// nên cần thêm các hàm khác nữa ví dụ các hàm in ra màn hình terminal dữ liệu gì đó
-// hay các hàm phụ để tính toán logic
+// Cấu hình Flex sensor
+struct FlexSensorConfig {
+    uint8_t adc_pin;               // chân ADC
+    uint16_t sampling_period_ms;   // chu kỳ lấy mẫu
+    uint16_t block_duration_ms;    // thời gian gom 1 block
+    uint16_t max_samples_per_block;// số mẫu tối đa trong block
+    float ema_alpha;               // hệ số EMA
+};
 
-// lưu ý
-// tên hàm, biến, struct nên đặt rõ nghĩa, ko chung chung khi x, y, z 
-//chừ các biến cục bộ trong hàm
+// Khối dữ liệu gửi đi
+struct FlexDataBlock {
+    uint32_t block_start_time_ms;  // thời điểm bắt đầu block
+    uint16_t sampling_period_ms;   // chu kỳ lấy mẫu
+    uint16_t sample_count;         // số mẫu hiện có
+    FlexSample samples[64];        // bộ đệm mẫu
+};
 
+// Hàm task chính
+void TaskFlexSensor(void *pvParameters);
+
+// Hàm khởi tạo task
+void initFlexSensorTask(void *pvParameters);
+
+// Hàm cấu hình
+void setupFlexSensorConfiguration(const FlexSensorConfig &config);
+
+// Hàm đọc ADC thô
+int readRawFlexValue();
+
+// Hàm lọc EMA
+float applyEMALowPassFilter(int raw_value);
+
+// Hàm thêm mẫu vào block
+void addSampleToFlexBlock(int raw_value, float filtered_value);
+
+// Hàm kiểm tra block đã đủ để gửi chưa
+bool isFlexBlockReadyToSend();
+
+// Hàm gửi / in block dữ liệu
+void sendFlexDataBlock();
+
+// Hàm reset block
+void resetFlexDataBlock();
 
 #endif
