@@ -122,3 +122,50 @@ void loop()
 {
     // Không dùng loop vì FreeRTOS đã xử lý
 }
+// -----------------------------------Mới----------------------
+ECG AD8232 TASK - MQTT UPDATE
+1. Mục tiêu
+
+Bạn chỉ cần:
+
+✔ chuẩn hóa payload gửi MQTT
+✔ chỉnh tần suất gửi (nếu cần)
+❌ không sửa sampling 200Hz / FreeRTOS / ADC logic
+2. Pipeline ECG hiện tại
+AD8232 → ADC → Voltage convert → TaskECG → (MQTTMessage → PublishTask → HiveMQ)
+Phần (MQTTMessage → PublishTask → HiveMQ) đã được đóng gói, bạn chỉ cần chỉnh lại payload và tần suất gửi
+
+3. QUAN TRỌNG: MQTTMessage format
+PayloadType:
+- PAYLOAD_FLOAT
+- PAYLOAD_INT
+- PAYLOAD_UINT16
+- PAYLOAD_CHAR
+
+
+4. cấu chúc 1 message
+enum PayloadType
+{
+    PAYLOAD_CHAR,
+    PAYLOAD_INT,
+    PAYLOAD_UINT16,
+    PAYLOAD_FLOAT
+};
+
+// 2 cấu trúc 1 message
+struct MQTTMessage
+{
+    char topic[32];
+    PayloadType type;
+    size_t size;
+
+    union {
+        char char_data[MAX_PAYLOAD_SIZE];
+        int int_data[MAX_PAYLOAD_SIZE];
+        uint16_t uint16_data[MAX_PAYLOAD_SIZE];
+        float float_data[MAX_PAYLOAD_SIZE];
+    } data;
+};
+
+bạn chỉ cần 
+tạo 1 object MQTTMessage -> gán các dữ liệu vào -> gọi hàm publisher->send(msg);
