@@ -1,4 +1,4 @@
-﻿//1 include thư viện/header
+//1 include thư viện/header
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "ecg_ad8232.h"
@@ -25,9 +25,17 @@ static ECGConfig ecg_config = {
 // Đây là hàm chính được hệ điều hành FreeRTOS quản lý
 void TaskECG(void *pvParameters) 
 {
+    //------------------- thêm------------
+    PublishTask* publisher = (PublishTask*)pvParameters;
+    //-----------------------------------------
+
     // Lấy thời điểm hiện tại làm mốc thời gian gốc cho vòng lặp
     uint32_t previous_wake_time = xTaskGetTickCount();
     
+    // ---------thêm counter để giảm số lần print dữ liệu---------
+    static uint32_t timer = millis();
+    //--------------------------------------------------
+
     while (1) 
     {
         // 1. Đọc giá trị ADC từ cảm biến AD8232
@@ -46,9 +54,36 @@ void TaskECG(void *pvParameters)
             .raw_adc_value = raw_ecg_value,
             .lead_off_status = lead_off
         };
+
+        // --------------4.5. MQTT send từng số 1-----------
+        if (publisher != nullptr)
+        {
+            MQTTMessage msg;
+
+            strcpy(msg.topic, "esp32/ecg");
+            msg.type = PAYLOAD_FLOAT;
+            msg.size = 3;
+
+            // dùng static để tránh lỗi bộ nhớ
+            static float payload[3];
+
+            payload[0] = ecg_data.voltage_mv;
+            payload[1] = ecg_data.raw_adc_value;
+            payload[2] = ecg_data.lead_off_status;
+
+            publisher->send(msg);
+        }
+        //----------------------------------
         
-        // 5. Debug dữ liệu qua Serial (Plotter hoặc Monitor)
-        printECGData(ecg_data);
+        //----------------- 5. Debug dữ liệu qua Serial (Plotter hoặc Monitor)
+        if ( millis() - timer >= 2000) 
+        {
+            //printECGData(ecg_data);
+            timer = millis();
+            Serial.print("--->[ECG AD8232 Task] Stack con du: ");
+            Serial.println(uxTaskGetStackHighWaterMark(NULL));
+        }
+        //------------------------------------------------
         
         // Duy trì tần số lấy mẫu ổn định tuyệt đối bằng cách bù trừ thời gian thực thi code
         vTaskDelayUntil(&previous_wake_time, pdMS_TO_TICKS(ecg_config.sampling_period_ms));
@@ -56,13 +91,13 @@ void TaskECG(void *pvParameters)
 }
 
 // 3.2. Hàm khởi tạo task ECG
-void initEcgTask(void *pvParameters) 
+void initEcgTask(PublishTask* publisher) 
 {
     xTaskCreate(
         TaskECG,                // Hàm task sẽ chạy
         "ECG Task",             // Tên task (để debug)
-        8192,                   // Kích thước stack (byte)
-        NULL,                   // Tham số truyền vào task
+        4092,                   // Kích thước stack (byte)
+        publisher,              // Tham số truyền vào task (truyền publisher)
         2,                      // Độ ưu tiên (priority) - 2 là mức trung bình
         NULL                    // Handle của task
     );
@@ -132,6 +167,7 @@ uint8_t checkLeadOffStatus()
 void printECGData(const ECGData &data)
 {
     // Format: Timestamp | ADC_Value | Voltage_mV | LeadOff_Status
+    Serial.print("--->[ECG AD8232]: ");
     Serial.print(data.timestamp_ms);
     Serial.print(" | ");
     Serial.print(data.raw_adc_value);

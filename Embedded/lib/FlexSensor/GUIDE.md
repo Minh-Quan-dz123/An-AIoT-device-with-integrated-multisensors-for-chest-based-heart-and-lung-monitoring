@@ -122,3 +122,66 @@ void loop()
 {
     // Không dùng loop vì FreeRTOS đã xử lý
 }
+// ---------------------------Mới ----------------------------------
+FLEX SENSOR TASK (ESP32 MQTT UPDATE)
+1. Mục tiêu thay đổi
+
+Bạn KHÔNG cần viết lại logic sensor.
+
+Bạn chỉ cần:
+
+✔ Sửa cách đóng gói MQTT payload
+✔ Điều chỉnh tần suất gửi (nếu cần)
+❌ Không đụng vào FreeRTOS / sampling / filter / buffer
+2. Kiến trúc hệ thống hiện tại
+
+Flex sensor chạy theo pipeline:
+
+ADC → EMA Filter → Buffer block (3s) → sendFlexDataBlock() → MQTT Queue → PublishTask → HiveMQ
+
+Bạn chỉ làm việc ở bước:
+
+👉 sendFlexDataBlock()
+
+3. QUAN TRỌNG: MQTTMessage format
+
+Bạn phải dùng đúng struct:
+
+struct MQTTMessage {
+    char topic[32];
+    PayloadType type;
+    size_t size;
+
+    union {
+        char char_data[32];
+        int int_data[32];
+        uint16_t uint16_data[32];
+        float float_data[32];
+    } data;
+};
+4. cấu chúc 1 message
+enum PayloadType
+{
+    PAYLOAD_CHAR,
+    PAYLOAD_INT,
+    PAYLOAD_UINT16,
+    PAYLOAD_FLOAT
+};
+
+// 2 cấu trúc 1 message
+struct MQTTMessage
+{
+    char topic[32];
+    PayloadType type;
+    size_t size;
+
+    union {
+        char char_data[MAX_PAYLOAD_SIZE];
+        int int_data[MAX_PAYLOAD_SIZE];
+        uint16_t uint16_data[MAX_PAYLOAD_SIZE];
+        float float_data[MAX_PAYLOAD_SIZE];
+    } data;
+};
+
+bạn chỉ cần 
+tạo 1 object MQTTMessage -> gán các dữ liệu vào -> gọi hàm publisher->send(msg);
