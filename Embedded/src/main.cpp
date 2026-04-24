@@ -96,7 +96,7 @@ void setup()
   mqttClient.begin();
 
   // 3 khởi động publisher mqtt
-  mqttBuffer.begin(10);
+  mqttBuffer.begin(100);
   publisher.begin();
 
 
