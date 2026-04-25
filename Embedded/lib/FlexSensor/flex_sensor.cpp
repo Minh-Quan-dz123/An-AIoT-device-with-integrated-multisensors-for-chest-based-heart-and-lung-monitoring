@@ -1,7 +1,7 @@
 #include "flex_sensor.h"
 
 // 1. Define giá trị mặc định
-#define FLEX_SENSOR_PIN 34
+#define FLEX_SENSOR_PIN 32
 #define FLEX_SAMPLING_PERIOD_MS 50     // 20Hz
 #define FLEX_BLOCK_DURATION_MS 3000    // gom 3 giây
 #define FLEX_MAX_SAMPLES 64            // 3 giây / 50ms = 60 mẫu, lấy dư 64

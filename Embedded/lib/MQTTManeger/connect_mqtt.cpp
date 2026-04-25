@@ -100,7 +100,6 @@ void MQTTTask::reconnect()
 
       // ----------------------------subscribe topic-----------------------------
       client.subscribe("esp32/test");
-      client.subscribe("esp32/ecg/batch_optimized"); 
       // ------------------------------------------------------------------------
     }
     else// 4.2 nếu ko kết nối được thì in ra lỗi

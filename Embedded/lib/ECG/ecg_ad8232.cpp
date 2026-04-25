@@ -36,9 +36,6 @@ void TaskECG(void *pvParameters)
     static uint32_t timer = millis();
     //--------------------------------------------------
 
-    static ECGFullBatch batch;
-    static int count = 0;
-
     while (1) 
     {
         // 1. Đọc giá trị ADC từ cảm biến AD8232
@@ -50,41 +47,41 @@ void TaskECG(void *pvParameters)
         // 3. Kiểm tra các điện cực có bị bong ra không (Lead-off detection)
         uint8_t lead_off = checkLeadOffStatus();
         
-        // 4. Gom dữ liệu vào batch: 100 mẫu điện áp + trạng thái lead-off
-        if (count == 0) {
-            batch.start_timestamp = millis(); 
-            batch.lead_off_summary = lead_off; // Khởi tạo summary với trạng thái lead-off đầu tiên
-        } else {
-            // Dùng toán tử OR: Chỉ cần 1 lần có giá trị 1, summary sẽ là 1
-            batch.lead_off_summary |= lead_off; 
-        }
+        // 4. Đóng gói dữ liệu vào struct kèm timestamp
+        ECGData ecg_data = {
+            .timestamp_ms = xTaskGetTickCount() * portTICK_PERIOD_MS,
+            .voltage_mv = ecg_voltage_mv,
+            .raw_adc_value = raw_ecg_value,
+            .lead_off_status = lead_off
+        };
 
-        batch.voltages[count] = ecg_voltage_mv;
-        count++;
-
-        // 5. Khi đủ 100 mẫu thì gửi một batch lên HiveMQ
-        if (count >= ECG_BATCH_SIZE)
+        // --------------4.5. MQTT send từng số 1-----------
+        if (publisher != nullptr)
         {
-            if (publisher != nullptr)
-            {
-                MQTTMessage msg;
-                strcpy(msg.topic, "esp32/ecg/batch_optimized");
-                msg.type = PAYLOAD_ECG_BATCH; 
+            MQTTMessage msg;
 
-                msg.data.ecg_batch = batch;
+            strcpy(msg.topic, "esp32/ecg");
+            msg.type = PAYLOAD_FLOAT;
+            msg.size = 3;
 
-                publisher->send(msg);
-            }
-            count = 0; // Reset để gom đợt mới
+            // dùng static để tránh lỗi bộ nhớ
+            static float payload[3];
+
+            payload[0] = ecg_data.voltage_mv;
+            payload[1] = ecg_data.raw_adc_value;
+            payload[2] = ecg_data.lead_off_status;
+
+            publisher->send(msg);
         }
+        //----------------------------------
         
         //----------------- 5. Debug dữ liệu qua Serial (Plotter hoặc Monitor)
-        if ( millis() - timer >= 2000) 
+        if ( millis() - timer >= 0) 
         {
-            //printECGData(ecg_data);
+            printECGData(ecg_data);
             timer = millis();
-            Serial.print("--->[ECG AD8232 Task] Stack con du: ");
-            Serial.println(uxTaskGetStackHighWaterMark(NULL));
+            //Serial.print("--->[ECG AD8232 Task] Stack con du: ");
+            //Serial.println(uxTaskGetStackHighWaterMark(NULL));
         }
         //------------------------------------------------
         

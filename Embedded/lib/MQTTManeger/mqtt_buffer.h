@@ -12,8 +12,7 @@ enum PayloadType
     PAYLOAD_CHAR,
     PAYLOAD_INT,
     PAYLOAD_UINT16,
-    PAYLOAD_FLOAT,
-    PAYLOAD_ECG_BATCH // thêm kiểu payload mới cho batch ECG
+    PAYLOAD_FLOAT
 };
 
 // 2 cấu trúc 1 message
@@ -28,8 +27,6 @@ struct MQTTMessage
         int int_data[MAX_PAYLOAD_SIZE];
         uint16_t uint16_data[MAX_PAYLOAD_SIZE];
         float float_data[MAX_PAYLOAD_SIZE];
-
-        ECGFullBatch ecg_batch; // thêm trường dữ liệu cho batch ECG
     } data;
 };
 

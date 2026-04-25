@@ -10,15 +10,14 @@
 #include <publish_task.h>
 #include <mqtt_buffer.h>
 
-// Định nghĩa số lượng mẫu gom
-#define ECG_BATCH_SIZE 100
-
-// Cấu trúc gói tin gửi lên HiveMQ (45 bytes)
-struct ECGFullBatch {
-    uint32_t start_timestamp;       // 4 bytes: Thời gian bắt đầu mảng
-    uint8_t lead_off_summary;       // 1 byte: Đại diện trạng thái (Dùng toán tử OR)
-    float voltages[ECG_BATCH_SIZE]; // 400 bytes: Mảng 100 mẫu điện áp
-} __attribute__((packed));
+//2. Khai báo các biến, struct của header này
+// Struct đại diện cho dữ liệu ECG
+struct ECGData {
+    uint32_t timestamp_ms;     // thời gian lấy mẫu (ms)
+    float voltage_mv;          // điện áp (mV)
+    uint16_t raw_adc_value;         // giá trị ADC thô
+    uint8_t lead_off_status;   // trạng thái lead-off (1: mất tín hiệu, 0: có tín hiệu)
+};
 
 // Cấu hình ECG
 struct ECGConfig {

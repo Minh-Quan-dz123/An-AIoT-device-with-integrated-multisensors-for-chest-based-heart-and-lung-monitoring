@@ -117,21 +117,6 @@ void PublishTask::taskLoop()
                             mqttConnector->publish(msg.topic, payload);
                             break;
                         }
-                        // 5.4. Xử lý kiểu payload mới cho batch ECG
-                        case PAYLOAD_ECG_BATCH:
-                        {
-                            char payload[512];
-                            int offset = sprintf(payload, "%u,%u", 
-                                                msg.data.ecg_batch.start_timestamp, 
-                                                msg.data.ecg_batch.lead_off_summary);
-                                                
-                            for (int i = 0; i < ECG_BATCH_SIZE; i++) {
-                                offset += sprintf(payload + offset, ",%.2f", msg.data.ecg_batch.voltages[i]);
-                            }
-                            
-                            mqttConnector->publish(msg.topic, payload);
-                            break;
-                        }
                     }
                     vTaskDelay(10 / portTICK_PERIOD_MS);
                 }
