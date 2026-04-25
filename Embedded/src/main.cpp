@@ -5,6 +5,7 @@
 #include <publish_task.h>
 #include <flex_sensor.h>
 #include <ecg_ad8232.h>
+#include <max4466.h>
 
 // 1 wifi task
 WiFiManagerTask wifiManager;
@@ -102,7 +103,8 @@ void setup()
 
   // 4 chạy các sensor task
   initFlexSensorTask(&publisher);
-  initEcgTask(&publisher);
+  //initEcgTask(&publisher);
+  //startMicTask();
 }
 
 void loop() 
